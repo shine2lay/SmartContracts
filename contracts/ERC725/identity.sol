@@ -49,7 +49,7 @@ contract identity {
         address to;
         uint256 value;
         bytes data;
-        bool approved;
+        bool rejected;
         bool executed;
     }
 
@@ -64,7 +64,7 @@ contract identity {
     // Public Functions
     ///////////////////////////
 
-    constructor () {
+    constructor () public {
         bytes32 creatorKey = addressToBytes32(msg.sender);
         keys[creatorKey].purposes.push(1); // give the creator of the contract management key permission
         keys[creatorKey].purposeExists[1] = true;
@@ -76,7 +76,7 @@ contract identity {
         return (keys[_key].purposes, keys[_key].keyType, _key);
     }
 
-    function keyHasPurpose(bytes32 _key, uint256 purpose) constant returns(bool exists) {
+    function keyHasPurpose(bytes32 _key, uint256 purpose) public constant returns(bool exists) {
         return keys[_key].purposeExists[purpose];
     }
 
@@ -176,26 +176,34 @@ contract identity {
 
     function approve(uint256 _id, bool _approve) public returns (bool success) {
         Key storage senderKey = keys[addressToBytes32(msg.sender)];
-        require (senderKey.purposeExists[1] || senderKey.purposeExists[2]);
+        require (!transactions[_id].rejected); // if tx has been rejected, revert
         require (!transactions[_id].executed);
+        require (senderKey.purposeExists[1] || senderKey.purposeExists[2]);
 
-        if (transactions[_id].to == address(this)) {
-            require (senderKey.purposeExists[1]);
+        if (!_approve) {
+            transactions[_id].rejected = true;
+            return false;
+        } else {
+            if (transactions[_id].to == address(this)) {
+                require (senderKey.purposeExists[1]);
+            }
+
+            executeCall(transactions[_id].to, transactions[_id].value, transactions[_id].data);
+
+            transactions[_id].executed = true;
+
+            emit Executed(_id, transactions[_id].to, transactions[_id].value, transactions[_id].data);
+
+            return true;
         }
 
-        executeCall(transactions[_id].to, transactions[_id].value, transactions[_id].data);
-
-        transactions[_id].approved = true;
-        transactions[_id].executed = true;
-
-        emit Executed(_id, transactions[_id].to, transactions[_id].value, transactions[_id].data);
     }
 
     function addressToBytes32(address toCast) public pure returns(bytes32 key) {
         return bytes32(toCast);
     }
 
-    function () payable {
+    function () public payable {
     }
 
     ////////////////////////////
