@@ -1,4 +1,4 @@
-let identity = artifacts.require('ERC725/identity.sol');
+let identity = artifacts.require('ERC725/Identity.sol');
 let utils = require('../utils/utils');
 
 let identityInstance;

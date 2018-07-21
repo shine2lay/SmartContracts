@@ -4,6 +4,8 @@ let assert = require('chai').assert;
 
 module.exports = {
 
+  createSignedMessage: ()
+
   assertThrows: function(promise, err) {
     return promise
       .then(function() {
