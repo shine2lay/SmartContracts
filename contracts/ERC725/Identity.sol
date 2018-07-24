@@ -210,20 +210,20 @@ contract Identity {
     // Private Functions
     ///////////////////////////
 
-    function executeCall(address _to, uint256 _value, bytes _data) internal {
+    function executeCall(address destination, uint256 value, bytes callData) internal {
         bool result;
-        uint256 dataLength = _data.length;
+        uint256 dataLength = callData.length;
 
         assembly {
             let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
-            let d := add(_data, 32) // First 32 bytes are the padded length of data, so exclude that
+            let d := add(callData, 32) // First 32 bytes are the padded length of data, so exclude that
             result := call(
             sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
             // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
             // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
-            _to,
-            _value,
-            _data,
+            destination,
+            value,
+            d,
             dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
             x,
             0                  // Output is ignored, therefore the output size is zero

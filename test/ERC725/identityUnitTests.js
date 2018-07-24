@@ -270,6 +270,28 @@ contract('Identity Contract (ERC725): execute Unit Tests', function(accounts) {
     assert.equal(tx[4], false); // executed
   });
 
+  it('checks that transaction with callData works properly', async function() {
+    // add a non-actionable key first
+
+    destinationToSend = identityInstance.address;
+    valueToSend = 0;
+    callDataToSend = identityInstance.contract.addKey.getData(keyToAdd, purposeToAdd, keyType);
+
+    await identityInstance.execute(destinationToSend, valueToSend, callDataToSend, {from: accounts[0]});
+    const tx = await identityInstance.transactions.call(1);
+
+    const key = await identityInstance.getKey.call(keyToAdd);
+    assert.equal(key[0].length, 1);
+    assert.equal(key[0][0].toNumber(), purposeToAdd);
+
+    assert.equal(tx[0], destinationToSend); // to
+    assert.equal(tx[1], valueToSend); // value
+    assert.equal(tx[2], callDataToSend); // data
+    assert.equal(tx[3], false); // rejected
+    assert.equal(tx[4], true); // executed
+
+  });
+
   it('checks that approve function is called if called from actionable keys', async function() {
     await identityInstance.execute(destinationToSend, valueToSend, callDataToSend);
     const tx = await identityInstance.transactions.call(1);
@@ -323,6 +345,7 @@ contract('Identity Contract (ERC725): approve Unit Tests', function(accounts) {
 
     destinationToSend = identityInstance.address;
     valueToSend = 0;
+    purposeToAdd = 3;
     callDataToSend = identityInstance.contract.addKey.getData(keyToAdd, purposeToAdd, keyType);
 
     const executionId = await identityInstance.execute.call(destinationToSend, valueToSend, callDataToSend);
@@ -330,7 +353,7 @@ contract('Identity Contract (ERC725): approve Unit Tests', function(accounts) {
 
     await utils.assertRevert(identityInstance.approve(executionId, true, {from: accounts[1]}));
 
-    await identityInstance.approve(executionId, true);
+    await identityInstance.approve(executionId, true, {from: accounts[0]});
   });
 
   it('checks that rejected variable is set appropriately', async function() {
