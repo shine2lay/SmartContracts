@@ -57,7 +57,7 @@ contract ExecuteSignedMessage is Identity {
         require(from == address(this));
         require(nonce == lastTxNonce + 1 || nonce >= now);
         require(supportedOpType[operationType]);
-        require(gasLimit() >= gasLimit);
+        require(startGas >= gasLimit);
 
         // extract callPrefix on the
         // get the msgHash
